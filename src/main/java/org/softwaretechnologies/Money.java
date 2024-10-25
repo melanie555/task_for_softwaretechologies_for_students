@@ -2,7 +2,7 @@ package org.softwaretechnologies;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Random;
+
 
 import static java.lang.Integer.MAX_VALUE;
 
@@ -26,10 +26,18 @@ public class Money {
      */
     @Override
     public boolean equals(Object o) {
-        // TODO: реализуйте вышеуказанную функцию
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        return false;
+        Money money = (Money) o;
+
+        // Округление суммы до 4 знаков после запятой для сравнения
+        BigDecimal thisAmount = amount != null ? amount.setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        BigDecimal otherAmount = money.amount != null ? money.amount.setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+
+        return type == money.type && thisAmount.compareTo(otherAmount) == 0;
     }
+
 
     /**
      * Формула:
@@ -48,12 +56,24 @@ public class Money {
      */
     @Override
     public int hashCode() {
-        // TODO: реализуйте вышеуказанную функцию
+        BigDecimal roundedAmount = (amount != null) ? amount.setScale(4, RoundingMode.HALF_UP) : BigDecimal.valueOf(10000);
+        int hashValue = roundedAmount.multiply(BigDecimal.valueOf(10000)).intValue();
 
+        if (type != null) {
+            switch (type) {
+                case USD -> hashValue += 1;
+                case EURO -> hashValue += 2;
+                case RUB -> hashValue += 3;
+                case KRONA -> hashValue += 4;
+                default -> hashValue += 5;
+            }
+        } else {
+            hashValue += 5;
+        }
 
-        Random random = new Random();
-        return random.nextInt();
+        return hashValue >= (MAX_VALUE - 5) ? MAX_VALUE : hashValue;
     }
+
 
     /**
      * Верните строку в формате
@@ -73,24 +93,19 @@ public class Money {
      * @return приведение к строке по указанному формату.
      */
     @Override
-    public String toString() {
-        // TODO: реализуйте вышеуказанную функцию
-        String str = type.toString()+": "+amount.setScale(4, RoundingMode.HALF_UP).toString();
-        return str;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public MoneyType getType() {
-        return type;
-    }
-
+public String toString() {
+            if (type == null && amount == null) {
+                return "null: null";
+            }
+            if (amount == null) {
+                return type + ": null";
+            }
+            BigDecimal formattedAmount = amount.setScale(4, RoundingMode.HALF_UP);
+            return (type != null ? type : "null") + ": " + formattedAmount;
+        }
     public static void main(String[] args) {
         Money money = new Money(MoneyType.EURO, BigDecimal.valueOf(10.00012));
         Money money1 = new Money(MoneyType.USD, BigDecimal.valueOf(10.5000));
-        System.out.println(money1.toString());
         System.out.println(money1.hashCode());
         System.out.println(money.equals(money1));
     }
